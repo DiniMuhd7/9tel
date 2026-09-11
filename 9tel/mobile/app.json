@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "9tel",
+    "slug": "9tel",
+    "scheme": "9tel",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "plugins": ["expo-router"],
+    "ios": { "bundleIdentifier": "com.example.ninetel" },
+    "android": { "package": "com.example.ninetel" }
+  }
+}
