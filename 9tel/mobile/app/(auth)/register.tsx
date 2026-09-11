@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, ScrollView } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
+import { BrandMark } from "../../components/BrandMark";
+import { colors, radius } from "../../constants/theme";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -8,41 +10,11 @@ export default function RegisterScreen() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [country, setCountry] = useState("");
-
   const handleContinue = () => {
-    // TODO: call api.auth.requestOtp(phone), then navigate to an OTP-entry
-    // screen before creating the account server-side.
+    if (!name.trim() || !phone.trim() || !email.trim() || !country.trim()) return Alert.alert("Complete your details", "Please fill in each field to continue.");
     router.push("/(auth)/login");
   };
-
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>Create your account</Text>
-
-      <Text style={styles.label}>Name</Text>
-      <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Full name" />
-
-      <Text style={styles.label}>Phone number</Text>
-      <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="+234..." keyboardType="phone-pad" />
-
-      <Text style={styles.label}>Email</Text>
-      <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" />
-
-      <Text style={styles.label}>Country</Text>
-      <TextInput style={styles.input} value={country} onChangeText={setCountry} placeholder="Nigeria" />
-
-      <Pressable style={styles.button} onPress={handleContinue}>
-        <Text style={styles.buttonText}>Continue</Text>
-      </Pressable>
-    </ScrollView>
-  );
+  return <SafeAreaView style={styles.safeArea}><KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}><ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled"><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()}><Text style={styles.back}>‹  Back</Text></Pressable><View style={styles.brand}><BrandMark /><Text style={styles.brandName}>9tel</Text></View><Text style={styles.title}>Set up your{`\n`}calling identity.</Text><Text style={styles.description}>A few details first. You’ll verify your number before calls are forwarded.</Text><View style={styles.form}><Field label="FULL NAME" value={name} onChangeText={setName} placeholder="Ada Okafor" autoComplete="name" /><Field label="PHONE NUMBER" value={phone} onChangeText={setPhone} placeholder="+234 800 000 0000" keyboardType="phone-pad" autoComplete="tel" /><Field label="EMAIL ADDRESS" value={email} onChangeText={setEmail} placeholder="ada@example.com" keyboardType="email-address" autoCapitalize="none" autoComplete="email" /><Field label="COUNTRY" value={country} onChangeText={setCountry} placeholder="Nigeria" /><Pressable accessibilityRole="button" style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]} onPress={handleContinue}><Text style={styles.buttonText}>Continue securely</Text><Text style={styles.buttonArrow}>→</Text></Pressable></View><Text style={styles.terms}>By continuing, you agree to receive a verification message. Standard messaging rates may apply.</Text><Text style={styles.footer}>Already use 9tel? <Text style={styles.footerLink} onPress={() => router.replace("/(auth)/login")}>Log in</Text></Text></ScrollView></KeyboardAvoidingView></SafeAreaView>;
 }
-
-const styles = StyleSheet.create({
-  container: { padding: 24, paddingTop: 60 },
-  heading: { fontSize: 22, fontWeight: "800", color: "#111827", marginBottom: 24 },
-  label: { fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 6, marginTop: 12 },
-  input: { backgroundColor: "#f9fafb", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 12, borderWidth: 1, borderColor: "#d1d5db" },
-  button: { backgroundColor: "#111827", borderRadius: 10, paddingVertical: 16, alignItems: "center", marginTop: 32 },
-  buttonText: { color: "#fff", fontWeight: "700", fontSize: 15 },
-});
+function Field(props: React.ComponentProps<typeof TextInput> & { label: string }) { const { label, ...inputProps } = props; return <View style={styles.field}><Text style={styles.label}>{label}</Text><TextInput style={styles.input} placeholderTextColor="#8AA0B9" {...inputProps} /></View>; }
+const styles = StyleSheet.create({ safeArea: { flex: 1, backgroundColor: colors.canvas }, flex: { flex: 1 }, container: { padding: 24, paddingBottom: 28 }, back: { color: colors.inkMuted, fontSize: 15, fontWeight: "700" }, brand: { flexDirection: "row", alignItems: "center", gap: 9, marginTop: 27 }, brandName: { color: colors.ink, fontSize: 21, fontWeight: "800" }, title: { color: colors.ink, fontSize: 30, lineHeight: 36, letterSpacing: -0.8, fontWeight: "800", marginTop: 29 }, description: { color: colors.inkMuted, fontSize: 15, lineHeight: 22, marginTop: 9 }, form: { marginTop: 27 }, field: { marginBottom: 16 }, label: { color: colors.inkMuted, fontSize: 11, letterSpacing: 1, fontWeight: "800", marginBottom: 8 }, input: { minHeight: 54, borderRadius: radius.small, backgroundColor: colors.surface, paddingHorizontal: 16, color: colors.ink, fontSize: 16, borderWidth: 1, borderColor: colors.border }, button: { minHeight: 56, marginTop: 7, borderRadius: radius.medium, backgroundColor: colors.primary, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }, buttonPressed: { backgroundColor: colors.primaryPressed }, buttonText: { color: colors.white, fontSize: 16, fontWeight: "800" }, buttonArrow: { color: colors.white, fontSize: 25 }, terms: { color: colors.inkMuted, fontSize: 12, lineHeight: 17, marginTop: 16 }, footer: { marginTop: 25, textAlign: "center", color: colors.inkMuted, fontSize: 14 }, footerLink: { color: colors.primary, fontWeight: "800" } });
