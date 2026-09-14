@@ -1,0 +1,30 @@
+{
+  "name": "9tel-mobile",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "expo": "^57.0.22",
+    "expo-router": "^57.0.12",
+    "expo-status-bar": "^3.0.9",
+    "expo-linking": "^8.0.9",
+    "expo-constants": "^18.0.10",
+    "react": "19.2.3",
+    "react-native": "0.86.2",
+    "react-native-safe-area-context": "^5.4.0",
+    "react-native-screens": "^4.10.0",
+    "@react-native-async-storage/async-storage": "^2.1.2",
+    "@twilio/voice-react-native-sdk": "2.0.0-preview.2",
+    "expo-contacts": "^15.0.9"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "@types/react": "^19.2.0"
+  },
+  "private": true
+}

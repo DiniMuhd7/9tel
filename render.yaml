@@ -1,0 +1,108 @@
+##############################################################################
+# Render Blueprint for the 9tel backend.
+#
+# Usage: push this repo to GitHub, then in the Render Dashboard choose
+# "New > Blueprint" and point it at the repo. Render reads this file and
+# provisions everything below in one pass. See README.md's "Deploying to
+# Render" section for the full walkthrough, including which secrets you'll
+# be prompted for and why.
+##############################################################################
+
+services:
+  - type: web
+    name: ninetel-backend
+    runtime: node
+    # This is a monorepo (mobile/ + backend/) — rootDir scopes the build to
+    # just the backend, so changes under mobile/ don't trigger a redeploy
+    # and paths below are relative to backend/, not the repo root.
+    rootDir: backend
+    region: oregon
+    plan: free
+    branch: main
+
+    buildCommand: npm install && npm run build
+    # Runs AFTER buildCommand but BEFORE startCommand, on every deploy —
+    # exactly where database migrations belong (per Render's own Prisma
+    # deployment guide). Using this instead of folding migrations into
+    # buildCommand or startCommand means a migration failure blocks the
+    # deploy cleanly, rather than either running against stale code or
+    # silently skipping.
+    preDeployCommand: npm run prisma:deploy
+    startCommand: npm run start
+
+    healthCheckPath: /health
+
+    envVars:
+      # --- Database ---
+      # Populated automatically from the Postgres instance defined below —
+      # never hardcode this.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ninetel-db
+          property: connectionString
+
+      # --- Render platform ---
+      - key: NODE_VERSION
+        value: 20.11.0
+      - key: PORT
+        value: 10000
+
+      # --- Auth ---
+      # Render generates a random 256-bit value on first deploy — you
+      # never see or set this yourself.
+      - key: JWT_SECRET
+        generateValue: true
+
+      # --- Twilio (Voice, SMS, Voice SDK) ---
+      # Prompted for in the Render Dashboard the first time this Blueprint
+      # deploys — see README for where to find each of these in the
+      # Twilio Console. Never hardcoded here.
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_API_KEY_SID
+        sync: false
+      - key: TWILIO_API_KEY_SECRET
+        sync: false
+      - key: TWILIO_TWIML_APP_SID
+        sync: false
+      - key: TWILIO_SMS_FROM_NUMBER
+        sync: false
+      - key: SHARED_TOLLFREE_NUMBER
+        sync: false
+      # This service's own public HTTPS URL, filled in automatically from
+      # Render's built-in RENDER_EXTERNAL_URL — Twilio's webhooks (voice,
+      # TwiML App) need this, and it removes a manual step: without this,
+      # you'd have to copy the onrender.com URL back into an env var
+      # AFTER the first deploy, once Render has actually assigned it.
+      - key: TWILIO_WEBHOOK_BASE_URL
+        fromService:
+          name: ninetel-backend
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+
+      # --- Stripe ---
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_PREMIUM
+        sync: false
+      - key: STRIPE_PRICE_BUSINESS
+        sync: false
+
+      # --- Product limits (not secrets — safe to keep as plain values) ---
+      - key: FREE_TIER_MONTHLY_MINUTES
+        value: "15"
+      - key: PREMIUM_TIER_MONTHLY_MINUTES
+        value: "500"
+      - key: BUSINESS_TIER_MONTHLY_MINUTES
+        value: "2000"
+      - key: BUSINESS_MAX_NUMBERS
+        value: "3"
+
+databases:
+  - name: ninetel-db
+    plan: free
+    databaseName: ninetel

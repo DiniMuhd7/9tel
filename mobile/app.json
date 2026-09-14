@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "9tel",
+    "slug": "9tel",
+    "scheme": "9tel",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-router",
+      "@twilio/voice-react-native-sdk",
+      ["expo-contacts", { "contactsPermission": "9tel uses your contacts to show names instead of numbers in your call history." }]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.example.ninetel",
+      "infoPlist": {
+        "UIBackgroundModes": ["voip", "audio"],
+        "NSMicrophoneUsageDescription": "9tel needs microphone access to connect your calls.",
+        "NSContactsUsageDescription": "9tel uses your contacts to show names instead of numbers in your call history."
+      }
+    },
+    "android": {
+      "package": "com.example.ninetel",
+      "permissions": ["RECORD_AUDIO", "FOREGROUND_SERVICE", "USE_FULL_SCREEN_INTENT", "READ_CONTACTS"]
+    }
+  }
+}

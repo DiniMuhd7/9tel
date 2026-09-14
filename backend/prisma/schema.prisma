@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SubscriptionTier {
+  free
+  premium
+  business
+}
+
+enum NumberType {
+  local
+  toll_free @map("toll-free")
+  mobile
+}
+
+enum NumberStatus {
+  active
+  inactive
+  pending
+}
+
+enum CallStatus {
+  answered
+  missed
+  failed
+}
+
+/// How a call gets delivered to the user once it reaches 9tel:
+///  - pstn: dialed out to a real phone number (destinationE164) — used
+///    for US/CA/GB users, where outbound termination is cheap.
+///  - client: delivered in-app via the Twilio Voice SDK (WebRTC), no PSTN
+///    dial-out at all — used for everyone else, since PSTN termination to
+///    most other countries is the dominant per-minute cost (see the
+///    revenue-feasibility breakdown). See routes/voice.ts.
+enum DestinationType {
+  pstn
+  client
+}
+
+/// Free-tier users need no identity at all — they're created via a
+/// device-scoped guest session (deviceId) with name/email/phone all
+/// null. phone/email/name only get populated when a user upgrades to
+/// Premium/Business, at which point they link a phone (OTP) and
+/// complete their profile. See routes/auth.ts.
+model User {
+  id               String           @id @default(uuid())
+  name             String           @default("")
+  email            String?          @unique
+  phone            String?          @unique
+  country          String           @default("")
+  deviceId         String?          @unique @map("device_id")
+  subscriptionTier SubscriptionTier @default(free) @map("subscription_tier")
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  numbers      NineTelNumber[]
+  callRecords  CallRecord[]
+  otpCodes     OtpCode[]
+
+  @@map("users")
+}
+
+/// One row per number a user can be reached on. Free-tier users share the
+/// same e164 (SHARED_TOLLFREE_NUMBER) with a unique `extension`;
+/// Premium/Business users have a unique dedicated `e164` and no extension.
+/// This is the INBOUND side only (what callers dial) — see
+/// destinationType/destinationE164/clientIdentity for the OUTBOUND
+/// delivery side, which is a separate decision (see DestinationType).
+model NineTelNumber {
+  id                   String          @id @default(uuid())
+  userId               String          @map("user_id")
+  user                 User            @relation(fields: [userId], references: [id])
+  e164                 String
+  extension            String?
+  country              String
+  numberType           NumberType      @map("number_type")
+  providerSid          String?         @map("provider_sid")
+  status               NumberStatus    @default(pending)
+  destinationType      DestinationType @default(pstn) @map("destination_type")
+  destinationE164      String?         @map("destination_e164")
+  destinationVerified  Boolean         @default(false) @map("destination_verified")
+  // Twilio Voice SDK Client identity this number rings when
+  // destinationType is "client" — see services/telephony/voiceToken.ts.
+  clientIdentity       String?         @unique @map("client_identity")
+  createdAt            DateTime        @default(now()) @map("created_at")
+
+  callRecords CallRecord[]
+
+  // e164 repeats across free-tier users sharing the toll-free number, so
+  // uniqueness must be on the pair, not e164 alone.
+  @@unique([e164, extension])
+  @@map("numbers")
+}
+
+model CallRecord {
+  id               String        @id @default(uuid())
+  userId           String        @map("user_id")
+  user             User          @relation(fields: [userId], references: [id])
+  ninetelNumberId  String        @map("ninetel_number_id")
+  ninetelNumber    NineTelNumber @relation(fields: [ninetelNumberId], references: [id])
+  providerCallSid  String        @unique @map("provider_call_sid")
+  callerNumber     String        @map("caller_number")
+  destinationNumber String       @map("destination_number")
+  startedAt        DateTime      @map("started_at")
+  durationSeconds  Int           @default(0) @map("duration_seconds")
+  status           CallStatus
+  adPlayed         Boolean       @default(false) @map("ad_played")
+
+  @@index([userId, startedAt])
+  @@map("call_records")
+}
+
+model Advertisement {
+  id             String   @id @default(uuid())
+  title          String
+  audioUrl       String   @map("audio_url")
+  durationSeconds Int     @map("duration_seconds")
+  targetCountry  String?  @map("target_country")
+  startDate      DateTime @map("start_date")
+  endDate        DateTime @map("end_date")
+  active         Boolean  @default(true)
+
+  @@map("advertisements")
+}
+
+/// Short-lived OTP codes for phone login. Store only a hash in real use —
+/// see auth.ts's TODO before this touches production data.
+model OtpCode {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id])
+  phone     String
+  codeHash  String   @map("code_hash")
+  expiresAt DateTime @map("expires_at")
+  consumedAt DateTime? @map("consumed_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone])
+  @@map("otp_codes")
+}
