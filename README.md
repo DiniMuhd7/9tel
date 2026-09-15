@@ -661,38 +661,26 @@ codebase has actually been run before now, including this Blueprint —
 validate it against your own Render/Twilio/Stripe accounts before
 relying on it).
 
-## Mobile dependency versions were 2 years stale — fixed, with one real architecture-level fix inside it
+## Mobile dependencies use one Expo SDK release line
 
-`mobile/package.json` was originally pinned to **Expo SDK 51** (May
-2024). As of this writing the current stable release is **SDK 57**
-(June 2026) — a two-year, six-release gap, which is exactly the kind of
-thing that surfaces as an opaque "expo-router dependency error" on
-install rather than a clear message pointing at the real cause. Two
-real, distinct problems were hiding in that gap:
+`mobile/package.json` is intentionally pinned to **Expo SDK 52**:
+`expo@~52.0.46`, `react@18.3.1`, and `react-native@0.76.9`. Its Expo
+modules, router, development client, and Jest preset are pinned to the
+same SDK 52 release line. Do not combine these React 18 dependencies
+with Expo SDK 57 packages: SDK 57's Jest preset requires React 19, so
+that mix produces npm's `ERESOLVE` peer-dependency error before Expo can
+load the app configuration.
 
-1. **`expo-router` changed its own versioning scheme.** Through SDK 55,
-   `expo-router` was versioned independently (`~3.5.0` alongside
-   `expo@~51.0.0`). Starting with the "New Expo SDK package versioning
-   scheme," `expo-router`'s version now **matches the Expo SDK number
-   directly** (`expo-router@57.0.12` alongside `expo@57.0.22`). Keeping
-   the old `~3.5.0` pin next to a bumped `expo` version is exactly the
-   shape of conflict that produces an "expo-router dependency error."
-2. **`@twilio/voice-react-native-sdk@^1.13.0` (what was pinned) is
-   Old-Architecture-only.** Expo SDK 55 **dropped support for the
-   Legacy Architecture entirely** — New Architecture is no longer
-   optional. A 1.x Twilio Voice SDK install alongside a current
-   Expo/React Native version is a genuine incompatibility, not just a
-   stale-version warning; it's specifically fixed by Twilio's
-   **`2.0.0-preview.2`** release, which added New Architecture support
-   and — notably — official Expo framework support for the first time
-   (earlier 1.x versions targeted bare React Native). This is now
-   pinned in `package.json`.
+`@twilio/voice-react-native-sdk@2.0.0-preview.2` remains pinned because
+the app imports its Voice, Call, and CallInvite APIs. It is separate
+from Expo's SDK-managed package set and should be upgraded only after
+checking Twilio's release notes and API compatibility.
 
 ### What else changed
 
-`expo`, `expo-router`, `react` (19.2.3), `react-native` (0.86.2), and
-`typescript` (6.0.3) are pinned to versions confirmed current as of this
-fix. `react-native-safe-area-context`, `react-native-screens`,
+`expo`, `expo-router`, `react` (18.3.1), `react-native` (0.76.9), and
+`typescript` (5.3.3) are pinned to the selected SDK 52 release line.
+`react-native-safe-area-context`, `react-native-screens`,
 `expo-status-bar`, `expo-contacts`, `@react-native-async-storage/async-storage`,
 and `@types/react` are set to reasonable current-generation versions,
 but **weren't individually verified against a live install** — nothing

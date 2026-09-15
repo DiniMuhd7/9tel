@@ -21,6 +21,7 @@
     },
     "android": {
       "package": "com.example.ninetel",
+      "versionCode": 1,
       "permissions": ["RECORD_AUDIO", "FOREGROUND_SERVICE", "USE_FULL_SCREEN_INTENT", "READ_CONTACTS"]
     }
   }
