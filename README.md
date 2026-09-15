@@ -676,6 +676,13 @@ the app imports its Voice, Call, and CallInvite APIs. It is separate
 from Expo's SDK-managed package set and should be upgraded only after
 checking Twilio's release notes and API compatibility.
 
+The Twilio package is deliberately not listed as an Expo config plugin.
+Expo autolinks installed React Native native modules during prebuild, and
+the explicit Android permissions and iOS VoIP/audio declarations already
+live in `app.json`. Keeping an SDK-57-era third-party config plugin in
+the SDK 52 config evaluation path can make `expo config --json` fail
+before EAS starts the native build.
+
 ### What else changed
 
 `expo`, `expo-router`, `react` (18.3.1), `react-native` (0.76.9), and
