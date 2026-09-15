@@ -703,11 +703,22 @@ weren't listed before.
 
 ### Run this after `npm install`, don't just trust the pins
 
+The repository has separate `backend/` and `mobile/` Node projects; it
+does not have a `package.json` at the repository root. Run the Expo and
+EAS commands from `mobile/`. For example, after cloning into
+`/content/9tel`, running `npm install` from `/content` will look for
+`/content/package.json` and fail with `ENOENT` before it ever reads the
+mobile dependencies.
+
 ```
-cd mobile
+cd /content/9tel/mobile
 npm install
 npx expo install --fix
+npx eas-cli@latest build --platform android --profile preview --non-interactive --debug
 ```
+
+The `preview` profile produces an internally distributed Android APK;
+its definition is in `mobile/eas.json`.
 
 `expo install --fix` is Expo's own tool for exactly this situation: it
 reads whichever `expo` version actually got installed and rewrites
