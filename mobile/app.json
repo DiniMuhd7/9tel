@@ -8,7 +8,6 @@
     "userInterfaceStyle": "automatic",
     "plugins": [
       "expo-router",
-      "@twilio/voice-react-native-sdk",
       ["expo-contacts", { "contactsPermission": "9tel uses your contacts to show names instead of numbers in your call history." }]
     ],
     "ios": {
